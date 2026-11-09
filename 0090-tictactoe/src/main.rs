@@ -1,49 +1,55 @@
 mod tictactoe;
 
-use std::io::{self, Write};
+use std::{
+    io::{self, Write},
+    str::FromStr,
+};
 use tictactoe::{Board, BoardPosition, GameStatus, PlaceStoneError, Player};
+use BoardPosition::*;
 
-enum ParseBoardPositionError {
+pub enum ParseBoardPositionError {
     FormatNotSupported,
     OutOfRange,
 }
 
-fn parse_board_position(input: &str) -> Result<BoardPosition, ParseBoardPositionError> {
-    use BoardPosition::*;
+impl FromStr for BoardPosition {
+    type Err = ParseBoardPositionError;
 
-    let position = if let Ok(number) = input.parse::<i32>() {
-        // Num-pad style: 1 is left lower, 9 is right upper
-        match number {
-            1 => C1,
-            2 => C2,
-            3 => C3,
-            4 => B1,
-            5 => B2,
-            6 => B3,
-            7 => A1,
-            8 => A2,
-            9 => A3,
-            _ => return Err(ParseBoardPositionError::OutOfRange),
-        }
-    } else if let [row @ b'A'..=b'Z', col @ b'1'..=b'9'] = input.as_bytes() {
-        // Chess style: A-C for rows, 1-3 for cols
-        match (row, col) {
-            (b'A', b'1') => A1,
-            (b'A', b'2') => A2,
-            (b'A', b'3') => A3,
-            (b'B', b'1') => B1,
-            (b'B', b'2') => B2,
-            (b'B', b'3') => B3,
-            (b'C', b'1') => C1,
-            (b'C', b'2') => C2,
-            (b'C', b'3') => C3,
-            _ => return Err(ParseBoardPositionError::OutOfRange),
-        }
-    } else {
-        return Err(ParseBoardPositionError::FormatNotSupported);
-    };
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
+        let position = if let Ok(number) = input.parse::<i32>() {
+            // Num-pad style: 1 is left lower, 9 is right upper
+            match number {
+                1 => C1,
+                2 => C2,
+                3 => C3,
+                4 => B1,
+                5 => B2,
+                6 => B3,
+                7 => A1,
+                8 => A2,
+                9 => A3,
+                _ => return Err(ParseBoardPositionError::OutOfRange),
+            }
+        } else if let [row @ b'A'..=b'Z', col @ b'1'..=b'9'] = input.as_bytes() {
+            // Chess style: A-C for rows, 1-3 for cols
+            match (row, col) {
+                (b'A', b'1') => A1,
+                (b'A', b'2') => A2,
+                (b'A', b'3') => A3,
+                (b'B', b'1') => B1,
+                (b'B', b'2') => B2,
+                (b'B', b'3') => B3,
+                (b'C', b'1') => C1,
+                (b'C', b'2') => C2,
+                (b'C', b'3') => C3,
+                _ => return Err(ParseBoardPositionError::OutOfRange),
+            }
+        } else {
+            return Err(ParseBoardPositionError::FormatNotSupported);
+        };
 
-    Ok(position)
+        Ok(position)
+    }
 }
 
 fn main() {
@@ -66,7 +72,7 @@ fn main() {
             break;
         }
 
-        let pos = match parse_board_position(input.trim()) {
+        let pos: BoardPosition = match input.trim().parse() {
             Ok(pos) => pos,
             Err(ParseBoardPositionError::FormatNotSupported) => {
                 println!("Please enter a number (1-9) or a position like B2.");
@@ -110,11 +116,10 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::BoardPosition::*;
     use super::*;
 
     fn assert_parses_to(input: &str, expected: BoardPosition) {
-        let Ok(parsed) = parse_board_position(input) else {
+        let Ok(parsed) = input.parse::<BoardPosition>() else {
             panic!("{input:?} should parse");
         };
 
@@ -124,7 +129,7 @@ mod tests {
     fn assert_out_of_range(input: &str) {
         assert!(
             matches!(
-                parse_board_position(input),
+                input.parse::<BoardPosition>(),
                 Err(ParseBoardPositionError::OutOfRange)
             ),
             "input: {input:?}"
@@ -134,7 +139,7 @@ mod tests {
     fn assert_format_not_supported(input: &str) {
         assert!(
             matches!(
-                parse_board_position(input),
+                input.parse::<BoardPosition>(),
                 Err(ParseBoardPositionError::FormatNotSupported)
             ),
             "input: {input:?}"
