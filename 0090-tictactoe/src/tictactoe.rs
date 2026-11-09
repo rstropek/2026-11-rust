@@ -12,7 +12,7 @@ pub enum GameStatus {
 }
 
 // All fields of the board: A-C for rows (top to bottom), 1-3 for cols (left to right).
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum BoardPosition {
     A1,
     A2,
@@ -25,36 +25,20 @@ pub enum BoardPosition {
     C3,
 }
 
-pub struct BoardIndex {
-    col: u8,
-    row: u8,
-}
-
-impl BoardIndex {
-    pub fn new(position: BoardPosition) -> Self {
-        let (col, row) = match position {
-            BoardPosition::A1 => (0, 0),
-            BoardPosition::A2 => (1, 0),
-            BoardPosition::A3 => (2, 0),
-            BoardPosition::B1 => (0, 1),
-            BoardPosition::B2 => (1, 1),
-            BoardPosition::B3 => (2, 1),
-            BoardPosition::C1 => (0, 2),
-            BoardPosition::C2 => (1, 2),
-            BoardPosition::C3 => (2, 2),
-        };
-
-        Self { col, row }
-    }
-
-    #[cfg(test)]
-    pub fn get_col(&self) -> u8 {
-        self.col
-    }
-
-    #[cfg(test)]
-    pub fn get_row(&self) -> u8 {
-        self.row
+impl BoardPosition {
+    // The (row, col) index of this position in `Board::fields`.
+    fn row_col(self) -> (usize, usize) {
+        match self {
+            Self::A1 => (0, 0),
+            Self::A2 => (0, 1),
+            Self::A3 => (0, 2),
+            Self::B1 => (1, 0),
+            Self::B2 => (1, 1),
+            Self::B3 => (1, 2),
+            Self::C1 => (2, 0),
+            Self::C2 => (2, 1),
+            Self::C3 => (2, 2),
+        }
     }
 }
 
@@ -90,12 +74,13 @@ impl Board {
         }
     }
 
-    pub fn place_stone(&mut self, pos: BoardIndex) -> Result<GameStatus, PlaceStoneError> {
+    pub fn place_stone(&mut self, pos: BoardPosition) -> Result<GameStatus, PlaceStoneError> {
         if !matches!(self.game_state, GameStatus::OngoingGame) {
             return Err(PlaceStoneError::GameAlreadyOver);
         }
 
-        let field = &mut self.fields[pos.row as usize][pos.col as usize];
+        let (row, col) = pos.row_col();
+        let field = &mut self.fields[row][col];
         if field.is_some() {
             return Err(PlaceStoneError::AlreadyOccupied);
         }
@@ -173,22 +158,21 @@ mod tests {
     use super::*;
 
     #[test]
-    fn new_maps_every_position_to_col_and_row() {
+    fn row_col_maps_every_position() {
         let cases = [
-            (A1, 0, 0),
-            (A2, 1, 0),
-            (A3, 2, 0),
-            (B1, 0, 1),
-            (B2, 1, 1),
-            (B3, 2, 1),
-            (C1, 0, 2),
-            (C2, 1, 2),
-            (C3, 2, 2),
+            (A1, (0, 0)),
+            (A2, (0, 1)),
+            (A3, (0, 2)),
+            (B1, (1, 0)),
+            (B2, (1, 1)),
+            (B3, (1, 2)),
+            (C1, (2, 0)),
+            (C2, (2, 1)),
+            (C3, (2, 2)),
         ];
 
-        for (position, col, row) in cases {
-            let index = BoardIndex::new(position);
-            assert_eq!((index.col, index.row), (col, row));
+        for (position, expected) in cases {
+            assert_eq!(position.row_col(), expected);
         }
     }
 
@@ -196,7 +180,7 @@ mod tests {
     fn play(board: &mut Board, moves: &[BoardPosition]) {
         for &position in moves {
             assert!(matches!(
-                board.place_stone(BoardIndex::new(position)),
+                board.place_stone(position),
                 Ok(GameStatus::OngoingGame)
             ));
         }
@@ -212,7 +196,7 @@ mod tests {
         let mut board = Board::new();
         play(&mut board, &[A1, B1, A2, B2]);
         assert!(matches!(
-            board.place_stone(BoardIndex::new(A3)),
+            board.place_stone(A3),
             Ok(GameStatus::Winner(Player::X))
         ));
         board
@@ -221,10 +205,7 @@ mod tests {
     fn drawn_board() -> Board {
         let mut board = Board::new();
         play(&mut board, &[A1, A2, A3, B2, C2, C1, B1, B3]);
-        assert!(matches!(
-            board.place_stone(BoardIndex::new(C3)),
-            Ok(GameStatus::Draw)
-        ));
+        assert!(matches!(board.place_stone(C3), Ok(GameStatus::Draw)));
         board
     }
 
@@ -249,7 +230,7 @@ mod tests {
         play(&mut board, &[A1]);
 
         assert!(matches!(
-            board.place_stone(BoardIndex::new(A1)),
+            board.place_stone(A1),
             Err(PlaceStoneError::AlreadyOccupied)
         ));
 
@@ -269,7 +250,7 @@ mod tests {
         play(&mut board, &[A1, A3, A2, B2, C3]);
 
         assert!(matches!(
-            board.place_stone(BoardIndex::new(C1)),
+            board.place_stone(C1),
             Ok(GameStatus::Winner(Player::O))
         ));
     }
@@ -280,7 +261,7 @@ mod tests {
         play(&mut board, &[A1, A2, A3, B1, C1, B3, C3, C2]);
 
         assert!(matches!(
-            board.place_stone(BoardIndex::new(B2)),
+            board.place_stone(B2),
             Ok(GameStatus::Winner(Player::X))
         ));
     }
@@ -294,7 +275,7 @@ mod tests {
     fn place_stone_rejects_free_field_after_win() {
         let mut board = board_won_by_x();
         assert!(matches!(
-            board.place_stone(BoardIndex::new(C3)),
+            board.place_stone(C3),
             Err(PlaceStoneError::GameAlreadyOver)
         ));
     }
@@ -303,7 +284,7 @@ mod tests {
     fn place_stone_reports_game_over_before_occupied_field() {
         let mut board = board_won_by_x();
         assert!(matches!(
-            board.place_stone(BoardIndex::new(A1)),
+            board.place_stone(A1),
             Err(PlaceStoneError::GameAlreadyOver)
         ));
     }
@@ -312,7 +293,7 @@ mod tests {
     fn place_stone_rejects_move_after_draw() {
         let mut board = drawn_board();
         assert!(matches!(
-            board.place_stone(BoardIndex::new(A1)),
+            board.place_stone(A1),
             Err(PlaceStoneError::GameAlreadyOver)
         ));
     }

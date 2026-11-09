@@ -11,12 +11,6 @@
   * `A1`, `A2`, `A3`
   * `B1`, `B2`, `B3`
   * `C1`, `C2`, `C3`
-* Struct `BoardIndex` - holds a VALID index in the board
-  * `col: u8`
-  * `row: u8`
-  * `fn new`
-    * Input: `position: BoardPosition`
-    * Output: `BoardIndex`
 * Enum `PlaceStoneError`
   * `AlreadyOccupied`
   * `GameAlreadyOver` (won or drawn)
@@ -25,7 +19,7 @@
   * `next_player: Player` - player who has to place next stone
   * `game_state: GameStatus`
   * `fn place_stone` - places a stone and indicates the game status back
-    * Input: `&mut self`, `pos: BoardIndex`
+    * Input: `&mut self`, `pos: BoardPosition`
     * Output: `Result<GameStatus, PlaceStoneError>`
   * `fn to_string` - turns the board into a string that could be printed in logs, console, etc.
     * Input: `&self`, `&mut String`
@@ -49,9 +43,9 @@
     * if error -> print error
     * Show the board on the console (`to_string`)
     * if winner or draw -> print game result and end game
-* Enum `ParseBoardIndexError`
+* Enum `ParseBoardPositionError`
   * `FormatNotSupported` - invalid string format (e.g. too long, does not match any of the defined formats)
   * `OutOfRange`
-* `fn parse_board_index`
+* `fn parse_board_position`
   * Input: `&str`
-  * Output: `Result<BoardIndex, ParseBoardIndexError>`
+  * Output: `Result<BoardPosition, ParseBoardPositionError>`

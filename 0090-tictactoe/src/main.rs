@@ -1,14 +1,14 @@
 mod tictactoe;
 
 use std::io::{self, Write};
-use tictactoe::{Board, BoardIndex, BoardPosition, GameStatus, PlaceStoneError, Player};
+use tictactoe::{Board, BoardPosition, GameStatus, PlaceStoneError, Player};
 
-enum ParseBoardIndexError {
+enum ParseBoardPositionError {
     FormatNotSupported,
     OutOfRange,
 }
 
-fn parse_board_index(input: &str) -> Result<BoardIndex, ParseBoardIndexError> {
+fn parse_board_position(input: &str) -> Result<BoardPosition, ParseBoardPositionError> {
     use BoardPosition::*;
 
     let position = if let Ok(number) = input.parse::<i32>() {
@@ -23,7 +23,7 @@ fn parse_board_index(input: &str) -> Result<BoardIndex, ParseBoardIndexError> {
             7 => A1,
             8 => A2,
             9 => A3,
-            _ => return Err(ParseBoardIndexError::OutOfRange),
+            _ => return Err(ParseBoardPositionError::OutOfRange),
         }
     } else if let [row @ b'A'..=b'Z', col @ b'1'..=b'9'] = input.as_bytes() {
         // Chess style: A-C for rows, 1-3 for cols
@@ -37,13 +37,13 @@ fn parse_board_index(input: &str) -> Result<BoardIndex, ParseBoardIndexError> {
             (b'C', b'1') => C1,
             (b'C', b'2') => C2,
             (b'C', b'3') => C3,
-            _ => return Err(ParseBoardIndexError::OutOfRange),
+            _ => return Err(ParseBoardPositionError::OutOfRange),
         }
     } else {
-        return Err(ParseBoardIndexError::FormatNotSupported);
+        return Err(ParseBoardPositionError::FormatNotSupported);
     };
 
-    Ok(BoardIndex::new(position))
+    Ok(position)
 }
 
 fn main() {
@@ -66,13 +66,13 @@ fn main() {
             break;
         }
 
-        let pos = match parse_board_index(input.trim()) {
+        let pos = match parse_board_position(input.trim()) {
             Ok(pos) => pos,
-            Err(ParseBoardIndexError::FormatNotSupported) => {
+            Err(ParseBoardPositionError::FormatNotSupported) => {
                 println!("Please enter a number (1-9) or a position like B2.");
                 continue;
             }
-            Err(ParseBoardIndexError::OutOfRange) => {
+            Err(ParseBoardPositionError::OutOfRange) => {
                 println!("This position is not on the board.");
                 continue;
             }
@@ -110,25 +110,22 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
+    use super::BoardPosition::*;
     use super::*;
 
-    fn assert_parses_to(input: &str, col: u8, row: u8) {
-        let Ok(parsed) = parse_board_index(input) else {
+    fn assert_parses_to(input: &str, expected: BoardPosition) {
+        let Ok(parsed) = parse_board_position(input) else {
             panic!("{input:?} should parse");
         };
 
-        assert_eq!(
-            (parsed.get_col(), parsed.get_row()),
-            (col, row),
-            "input: {input:?}"
-        );
+        assert_eq!(parsed, expected, "input: {input:?}");
     }
 
     fn assert_out_of_range(input: &str) {
         assert!(
             matches!(
-                parse_board_index(input),
-                Err(ParseBoardIndexError::OutOfRange)
+                parse_board_position(input),
+                Err(ParseBoardPositionError::OutOfRange)
             ),
             "input: {input:?}"
         );
@@ -137,8 +134,8 @@ mod tests {
     fn assert_format_not_supported(input: &str) {
         assert!(
             matches!(
-                parse_board_index(input),
-                Err(ParseBoardIndexError::FormatNotSupported)
+                parse_board_position(input),
+                Err(ParseBoardPositionError::FormatNotSupported)
             ),
             "input: {input:?}"
         );
@@ -147,38 +144,38 @@ mod tests {
     #[test]
     fn parses_all_num_pad_positions() {
         let cases = [
-            ("1", 0, 2),
-            ("2", 1, 2),
-            ("3", 2, 2),
-            ("4", 0, 1),
-            ("5", 1, 1),
-            ("6", 2, 1),
-            ("7", 0, 0),
-            ("8", 1, 0),
-            ("9", 2, 0),
+            ("1", C1),
+            ("2", C2),
+            ("3", C3),
+            ("4", B1),
+            ("5", B2),
+            ("6", B3),
+            ("7", A1),
+            ("8", A2),
+            ("9", A3),
         ];
 
-        for (input, col, row) in cases {
-            assert_parses_to(input, col, row);
+        for (input, expected) in cases {
+            assert_parses_to(input, expected);
         }
     }
 
     #[test]
     fn parses_all_chess_positions() {
         let cases = [
-            ("A1", 0, 0),
-            ("A2", 1, 0),
-            ("A3", 2, 0),
-            ("B1", 0, 1),
-            ("B2", 1, 1),
-            ("B3", 2, 1),
-            ("C1", 0, 2),
-            ("C2", 1, 2),
-            ("C3", 2, 2),
+            ("A1", A1),
+            ("A2", A2),
+            ("A3", A3),
+            ("B1", B1),
+            ("B2", B2),
+            ("B3", B3),
+            ("C1", C1),
+            ("C2", C2),
+            ("C3", C3),
         ];
 
-        for (input, col, row) in cases {
-            assert_parses_to(input, col, row);
+        for (input, expected) in cases {
+            assert_parses_to(input, expected);
         }
     }
 
