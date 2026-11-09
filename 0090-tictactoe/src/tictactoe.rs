@@ -25,10 +25,12 @@ impl BoardIndex {
         }
     }
 
+    #[cfg(test)]
     pub fn get_col(&self) -> u8 {
         self.col
     }
 
+    #[cfg(test)]
     pub fn get_row(&self) -> u8 {
         self.row
     }
