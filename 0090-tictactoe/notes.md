@@ -7,12 +7,16 @@
   * `Winner(Player)`
   * `Draw`
   * `OngoingGame`
+* Enum `BoardPosition` - all nine fields of the board (A-C for rows, 1-3 for cols)
+  * `A1`, `A2`, `A3`
+  * `B1`, `B2`, `B3`
+  * `C1`, `C2`, `C3`
 * Struct `BoardIndex` - holds a VALID index in the board
   * `col: u8`
   * `row: u8`
   * `fn new`
-    * Input: col, row
-    * Output: `Option<BoardIndex>`
+    * Input: `position: BoardPosition`
+    * Output: `BoardIndex`
 * Enum `PlaceStoneError`
   * `AlreadyOccupied`
   * `GameAlreadyOver` (won or drawn)

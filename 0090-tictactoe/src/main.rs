@@ -1,7 +1,7 @@
 mod tictactoe;
 
 use std::io::{self, Write};
-use tictactoe::{Board, BoardIndex, GameStatus, PlaceStoneError, Player};
+use tictactoe::{Board, BoardIndex, BoardPosition, GameStatus, PlaceStoneError, Player};
 
 enum ParseBoardIndexError {
     FormatNotSupported,
@@ -9,22 +9,41 @@ enum ParseBoardIndexError {
 }
 
 fn parse_board_index(input: &str) -> Result<BoardIndex, ParseBoardIndexError> {
-    let (col, row) = if let Ok(number) = input.parse::<i32>() {
-        // Num-pad style: 1 is left lower, 9 is right upper
-        if !(1..=9).contains(&number) {
-            return Err(ParseBoardIndexError::OutOfRange);
-        }
+    use BoardPosition::*;
 
-        let zero_based = number as u8 - 1;
-        (zero_based % 3, 2 - zero_based / 3)
+    let position = if let Ok(number) = input.parse::<i32>() {
+        // Num-pad style: 1 is left lower, 9 is right upper
+        match number {
+            1 => C1,
+            2 => C2,
+            3 => C3,
+            4 => B1,
+            5 => B2,
+            6 => B3,
+            7 => A1,
+            8 => A2,
+            9 => A3,
+            _ => return Err(ParseBoardIndexError::OutOfRange),
+        }
     } else if let [row @ b'A'..=b'Z', col @ b'1'..=b'9'] = input.as_bytes() {
         // Chess style: A-C for rows, 1-3 for cols
-        (col - b'1', row - b'A')
+        match (row, col) {
+            (b'A', b'1') => A1,
+            (b'A', b'2') => A2,
+            (b'A', b'3') => A3,
+            (b'B', b'1') => B1,
+            (b'B', b'2') => B2,
+            (b'B', b'3') => B3,
+            (b'C', b'1') => C1,
+            (b'C', b'2') => C2,
+            (b'C', b'3') => C3,
+            _ => return Err(ParseBoardIndexError::OutOfRange),
+        }
     } else {
         return Err(ParseBoardIndexError::FormatNotSupported);
     };
 
-    BoardIndex::new(col, row).ok_or(ParseBoardIndexError::OutOfRange)
+    Ok(BoardIndex::new(position))
 }
 
 fn main() {
