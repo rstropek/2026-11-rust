@@ -1,3 +1,5 @@
+use std::fmt;
+
 #[derive(Clone, Copy, PartialEq)]
 pub enum Player {
     X,
@@ -104,26 +106,6 @@ impl Board {
         Ok(self.game_state)
     }
 
-    pub fn to_string(&self, output: &mut String) {
-        for (row_index, row) in self.fields.iter().enumerate() {
-            if row_index > 0 {
-                output.push_str("\n---+---+---\n");
-            }
-
-            for (col_index, field) in row.iter().enumerate() {
-                if col_index > 0 {
-                    output.push('|');
-                }
-
-                output.push_str(match field {
-                    Some(Player::X) => " X ",
-                    Some(Player::O) => " O ",
-                    None => "   ",
-                });
-            }
-        }
-    }
-
     fn has_won(&self, player: Player) -> bool {
         let stone = Some(player);
 
@@ -149,6 +131,30 @@ impl Board {
         }
 
         true
+    }
+}
+
+impl fmt::Debug for Board {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for (row_index, row) in self.fields.iter().enumerate() {
+            if row_index > 0 {
+                f.write_str("\n---+---+---\n")?;
+            }
+
+            for (col_index, field) in row.iter().enumerate() {
+                if col_index > 0 {
+                    f.write_str("|")?;
+                }
+
+                f.write_str(match field {
+                    Some(Player::X) => " X ",
+                    Some(Player::O) => " O ",
+                    None => "   ",
+                })?;
+            }
+        }
+
+        Ok(())
     }
 }
 
@@ -187,9 +193,7 @@ mod tests {
     }
 
     fn render(board: &Board) -> String {
-        let mut output = String::new();
-        board.to_string(&mut output);
-        output
+        format!("{board:?}")
     }
 
     fn board_won_by_x() -> Board {
@@ -324,21 +328,11 @@ mod tests {
     }
 
     #[test]
-    fn to_string_renders_board_from_design() {
+    fn debug_renders_board_from_design() {
         let mut board = Board::new();
         play(&mut board, &[A2, A3, B1, B2, C2, C3]);
 
         let expected = "   | X | O \n---+---+---\n X | O |   \n---+---+---\n   | X | O ";
         assert_eq!(render(&board), expected);
-    }
-
-    #[test]
-    fn to_string_appends_to_existing_content() {
-        let mut output = String::from("Board:\n");
-        Board::new().to_string(&mut output);
-
-        let expected =
-            "Board:\n   |   |   \n---+---+---\n   |   |   \n---+---+---\n   |   |   ";
-        assert_eq!(output, expected);
     }
 }

@@ -55,7 +55,6 @@ impl FromStr for BoardPosition {
 fn main() {
     let mut board = Board::new();
     let mut input = String::new();
-    let mut output = String::new();
 
     loop {
         print!("Your next move (1-9 or A1-C3): ");
@@ -92,9 +91,7 @@ fn main() {
             Ok(_) => {}
         }
 
-        output.clear();
-        board.to_string(&mut output);
-        println!("{output}");
+        println!("{board:?}");
 
         match result {
             Ok(GameStatus::Winner(Player::X)) => {
