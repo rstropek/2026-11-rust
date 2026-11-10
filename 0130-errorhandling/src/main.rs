@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use std::{io, string::FromUtf8Error};
 
 use serde_json::Value;
