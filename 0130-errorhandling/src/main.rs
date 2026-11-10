@@ -48,7 +48,7 @@ async fn read_and_parse_v3(file_name: &str) -> anyhow::Result<String> {
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), i32> {
     let greeting = read_and_parse_v2("dem.json").await;
     match greeting {
         Ok(msg) => println!("{}", msg),
@@ -74,4 +74,12 @@ async fn main() {
         },
     }
 
+    let second = read_and_parse_v2("demo.json")
+        .await
+        .map_err(|_| -1)?;
+    let third = read_and_parse_v3("demo.json")
+        .await
+        .map_err(|_| -1)?;
+
+    Ok(())
 }
