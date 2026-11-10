@@ -34,17 +34,6 @@ where
     }
 }
 
-// Simplify??
-impl Pointworthy for Box<dyn Pointworthy> {
-    fn points(&self) -> i32 {
-        (**self).points()
-    }
-
-    fn get_point_factor(&self) -> f32 {
-        (**self).get_point_factor()
-    }
-}
-
 impl Billable for ConsultingWork {
     fn total(&self) -> f32 {
         self.hours * self.rate
@@ -128,14 +117,19 @@ fn main() {
     });
     print_pointworthy_dyn(consulting_work_pointworthy.as_ref());
 
-    let pointworthy_items: [Box<dyn Pointworthy>; 3] = [
-        Box::new(ConsultingWork {
+    // ConsultingWork is Pointworthy via the blanket impl (because it is Billable),
+    // so [ConsultingWork; 2] is Pointworthy via the array impl.
+    let pointworthy_items = [
+        ConsultingWork {
             what: String::from("Training"),
             hours: 10.0,
             rate: 50.0,
-        }),
-        Box::new(100.0),
-        Box::new(()),
+        },
+        ConsultingWork {
+            what: String::from("Consulting"),
+            hours: 5.0,
+            rate: 100.0,
+        },
     ];
     print_pointworthy_dyn(&pointworthy_items);
 }
