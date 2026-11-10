@@ -1,9 +1,10 @@
-use std::{error::Error, fmt::Display, io, string::FromUtf8Error};
+use std::{io, string::FromUtf8Error};
 
 use serde_json::Value;
 use thiserror::Error;
 use tokio::{fs::File, io::AsyncReadExt};
 
+#[allow(unused)]
 async fn read_and_parse(file_name: &str) -> String {
     let mut f = File::open(file_name).await.unwrap();
     let mut buf = Vec::new();
