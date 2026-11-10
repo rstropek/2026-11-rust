@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+#![allow(dead_code)]
 
 struct TemperaturSensor {
     config_value: i32, // Imagine some configuration data about the sensor
